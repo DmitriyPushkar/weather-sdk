@@ -2,7 +2,6 @@ package com.example.weathersdk.exception;
 
 import lombok.Getter;
 
-// Custom exception for Weather SDK errors
 @Getter
 public class WeatherSdkException extends RuntimeException {
     private final int statusCode;
@@ -33,4 +32,3 @@ public class WeatherSdkException extends RuntimeException {
         this.errorDetails = null;
     }
 }
-
