@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>weather-sdk</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
     <name>weather-sdk</name>
     <description>SDK for retrieving weather data from OpenWeather API</description>
 

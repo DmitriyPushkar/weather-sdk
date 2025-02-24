@@ -24,6 +24,10 @@ class WeatherCacheManager {
     private final ConcurrentHashMap<String, Boolean> citySet = new ConcurrentHashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
 
+    WeatherCacheManager() {
+        this(Ticker.systemTicker());
+    }
+
     WeatherCacheManager(Ticker ticker) {
         this.cache = Caffeine.newBuilder()
                 .maximumSize(MAX_CITIES)
