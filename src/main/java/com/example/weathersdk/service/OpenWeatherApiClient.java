@@ -12,7 +12,6 @@ import java.util.Map;
 
 @Slf4j
 class OpenWeatherApiClient {
-
     private static final String BASE_URL = "https://api.openweathermap.org/data/2.5";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

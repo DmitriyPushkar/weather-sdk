@@ -4,7 +4,6 @@ import com.example.weathersdk.exception.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -146,11 +145,11 @@ class OpenWeatherApiClientTest {
     @Test
     void fetchWeather_ThrowsWeatherSdkException_WhenBadRequest() {
         String errorResponse = """
-        {
-          "cod": "400",
-          "message": "Invalid request"
-        }
-    """;
+                    {
+                      "cod": "400",
+                      "message": "Invalid request"
+                    }
+                """;
 
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(400)
@@ -163,11 +162,11 @@ class OpenWeatherApiClientTest {
     @Test
     void fetchWeather_ThrowsInvalidApiKeyException() {
         String errorResponse = """
-        {
-          "cod": "401",
-          "message": "Invalid API key"
-        }
-    """;
+                    {
+                      "cod": "401",
+                      "message": "Invalid API key"
+                    }
+                """;
 
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(401)
@@ -180,11 +179,11 @@ class OpenWeatherApiClientTest {
     @Test
     void fetchWeather_ThrowsInvalidApiKeyException_WhenApiKeyIsBlocked() {
         String errorResponse = """
-        {
-          "cod": "403",
-          "message": "Your API key has been blocked"
-        }
-    """;
+                    {
+                      "cod": "403",
+                      "message": "Your API key has been blocked"
+                    }
+                """;
 
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(403)
@@ -197,11 +196,11 @@ class OpenWeatherApiClientTest {
     @Test
     void fetchWeather_ThrowsCityNotFoundException() {
         String errorResponse = """
-        {
-          "cod": "404",
-          "message": "city not found"
-        }
-    """;
+                    {
+                      "cod": "404",
+                      "message": "city not found"
+                    }
+                """;
 
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(404)
