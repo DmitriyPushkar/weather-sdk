@@ -92,8 +92,9 @@ public class WeatherSdkFactory {
         }
         lock.lock();
         try {
-            if (instances.containsKey(apiKey)) {
-                instances.remove(apiKey);
+            WeatherSdk instance = instances.remove(apiKey);
+            if (instance != null) {
+                instance.shutdown();
                 log.info("Removed WeatherSdk instance for API key: {}", apiKey);
             } else {
                 log.warn("Attempted to remove non-existent WeatherSdk instance for API key: {}", apiKey);

@@ -12,6 +12,8 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -66,13 +68,14 @@ class WeatherCacheManager {
             log.warn("Weather data for city '{}' is not found in cache.", cityName);
             throw new CityNotFoundException("Weather data for city '" + cityName + "' is not found in cache.");
         }
-        log.debug("Returning cached weather data for city '{}'", cityName);
+        log.info("Weather data for city '{}' retrieved from cache.", cityName);
         return data;
     }
 
     /**
      * Updates or adds weather data to the cache for the given city.
      * If the cache exceeds the maximum size, the oldest entry is removed.
+     * Additionally, schedules automatic expiration of the cached entry after a fixed time.
      *
      * @param cityName the name of the city
      * @param data     the weather data as a JSON string
@@ -84,10 +87,8 @@ class WeatherCacheManager {
         if (data == null || data.trim().isEmpty()) {
             throw new WeatherSdkException("Weather data cannot be null or empty for city: " + cityName);
         }
-
         boolean alreadyExists = citySet.putIfAbsent(cityName, true) != null;
         cache.put(cityName, data);
-
         synchronized (this) {
             if (!alreadyExists) {
                 cityOrder.add(cityName);
@@ -100,6 +101,12 @@ class WeatherCacheManager {
                 removeOldestEntry();
             }
         }
+
+        Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+            cache.invalidate(cityName);
+            citySet.remove(cityName);
+            log.info("Cache expired and removed for '{}'", cityName);
+        }, EXPIRATION_TIME.toMinutes(), TimeUnit.MINUTES);
     }
 
     /**

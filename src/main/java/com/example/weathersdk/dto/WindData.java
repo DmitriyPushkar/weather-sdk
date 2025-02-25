@@ -2,6 +2,7 @@ package com.example.weathersdk.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 /**
@@ -15,6 +16,7 @@ public class WindData {
     /**
      * Wind speed in meters per second.
      */
+    @Min(value = 0, message = "Wind speed cannot be negative")
     @JsonProperty("speed")
     private double speed;
 

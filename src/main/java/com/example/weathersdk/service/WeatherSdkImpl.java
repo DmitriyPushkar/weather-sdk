@@ -2,17 +2,10 @@ package com.example.weathersdk.service;
 
 import com.example.weathersdk.api.WeatherSdk;
 import com.example.weathersdk.enums.UpdateMode;
-import com.example.weathersdk.exception.CityNotFoundException;
-import com.example.weathersdk.exception.InvalidCityException;
-import com.example.weathersdk.exception.JsonParsingException;
-import com.example.weathersdk.exception.WeatherSdkException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.example.weathersdk.exception.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +19,6 @@ import java.util.concurrent.locks.ReentrantLock;
 class WeatherSdkImpl implements WeatherSdk {
     private final OpenWeatherApiClient apiClient;
     private final WeatherCacheManager cacheManager;
-    private final ObjectMapper objectMapper;
     private final ReentrantLock lock = new ReentrantLock();
     private WeatherUpdater weatherUpdater;
 
@@ -34,6 +26,7 @@ class WeatherSdkImpl implements WeatherSdk {
     private final UpdateMode mode;
     @Getter
     private final int pollingIntervalSeconds;
+    private volatile boolean isShutdown = false;
 
     /**
      * Initializes the Weather SDK.
@@ -49,7 +42,6 @@ class WeatherSdkImpl implements WeatherSdk {
         }
         this.apiClient = new OpenWeatherApiClient(apiKey);
         this.cacheManager = new WeatherCacheManager();
-        this.objectMapper = new ObjectMapper();
 
         this.mode = mode;
         this.pollingIntervalSeconds = pollingIntervalSeconds;
@@ -74,6 +66,7 @@ class WeatherSdkImpl implements WeatherSdk {
 
     @Override
     public String getWeather(String cityName) {
+        checkShutdown();
         validateCityName(cityName);
         try {
             String cached = cacheManager.getCachedData(cityName);
@@ -89,33 +82,48 @@ class WeatherSdkImpl implements WeatherSdk {
 
     @Override
     public void updateWeather(String cityName) {
+        checkShutdown();
         validateCityName(cityName);
         fetchAndCache(cityName);
     }
 
     @Override
     public List<String> getCachedCities() {
+        checkShutdown();
         Set<String> set = cacheManager.getCachedCities();
         return new ArrayList<>(set);
     }
 
     @Override
     public void clearCache() {
+        checkShutdown();
         log.info("Clearing cache...");
         cacheManager.clearCache();
     }
 
     @Override
     public boolean isPollingEnabled() {
+        checkShutdown();
         return weatherUpdater != null;
     }
 
     @Override
     public void stopPolling() {
+        checkShutdown();
         if (weatherUpdater != null) {
             weatherUpdater.stop();
             weatherUpdater = null;
             log.info("Polling stopped.");
+        }
+    }
+
+    @Override
+    public void shutdown() {
+        if (!isShutdown) {
+            stopPolling();
+            clearCache();
+            isShutdown = true;
+            log.info("WeatherSdk instance has been shut down.");
         }
     }
 
@@ -141,10 +149,9 @@ class WeatherSdkImpl implements WeatherSdk {
                 log.debug("City '{}' not in cache, proceeding to fetch from API.", cityName);
             }
             String apiResponse = apiClient.fetchWeather(cityName);
-            String formattedJson = formatWeatherResponse(apiResponse);
-            cacheManager.updateCache(cityName, formattedJson);
+            cacheManager.updateCache(cityName, apiResponse);
             log.info("Fetched and cached weather for '{}'.", cityName);
-            return formattedJson;
+            return apiResponse;
         } finally {
             lock.unlock();
         }
@@ -162,93 +169,9 @@ class WeatherSdkImpl implements WeatherSdk {
         }
     }
 
-    /**
-     * Formats the raw JSON response from the OpenWeather API into the expected structure.
-     *
-     * @param rawJson the raw API response
-     * @return the formatted JSON string
-     * @throws JsonParsingException if the response cannot be parsed
-     */
-    private String formatWeatherResponse(String rawJson) {
-        try {
-            JsonNode root = objectMapper.readTree(rawJson);
-            ObjectNode sdkJson = objectMapper.createObjectNode();
-            sdkJson.set("weather", parseWeather(root));
-            sdkJson.set("temperature", parseTemperature(root));
-            sdkJson.put("visibility", root.path("visibility").asInt(0));
-            sdkJson.set("wind", parseWind(root));
-            sdkJson.put("datetime", root.path("dt").asLong(0));
-            sdkJson.set("sys", parseSys(root));
-            sdkJson.put("timezone", root.path("timezone").asLong(0));
-            sdkJson.put("name", root.path("name").asText("Unknown"));
-
-            return objectMapper.writeValueAsString(sdkJson);
-
-        } catch (IOException e) {
-            log.error("Failed to parse JSON from OpenWeather API", e);
-            throw new JsonParsingException("Failed to parse JSON from OpenWeather", e);
+    private void checkShutdown() {
+        if (isShutdown) {
+            throw new SdkShutdownException("This WeatherSdk instance has been shut down and cannot be used.");
         }
-    }
-
-    /**
-     * Extracts weather information from the API response.
-     *
-     * @param root the root JSON node
-     * @return an {@link ObjectNode} containing weather data
-     */
-    private ObjectNode parseWeather(JsonNode root) {
-        ObjectNode weatherNode = objectMapper.createObjectNode();
-        JsonNode weatherArray = root.path("weather");
-
-        if (weatherArray.isArray() && !weatherArray.isEmpty()) {
-            JsonNode firstWeather = weatherArray.get(0);
-            weatherNode.put("main", firstWeather.path("main").asText(""));
-            weatherNode.put("description", firstWeather.path("description").asText(""));
-        }
-        return weatherNode;
-    }
-
-    /**
-     * Extracts temperature information from the API response.
-     *
-     * @param root the root JSON node
-     * @return an {@link ObjectNode} containing temperature data
-     */
-    private ObjectNode parseTemperature(JsonNode root) {
-        ObjectNode temperatureNode = objectMapper.createObjectNode();
-        JsonNode mainNode = root.path("main");
-
-        temperatureNode.put("temp", mainNode.path("temp").asDouble(0.0));
-        temperatureNode.put("feels_like", mainNode.path("feels_like").asDouble(0.0));
-        return temperatureNode;
-    }
-
-    /**
-     * Extracts wind information from the API response.
-     *
-     * @param root the root JSON node
-     * @return an {@link ObjectNode} containing wind data
-     */
-    private ObjectNode parseWind(JsonNode root) {
-        ObjectNode windNode = objectMapper.createObjectNode();
-        JsonNode windRoot = root.path("wind");
-
-        windNode.put("speed", windRoot.path("speed").asDouble(0.0));
-        return windNode;
-    }
-
-    /**
-     * Extracts system information (sunrise, sunset) from the API response.
-     *
-     * @param root the root JSON node
-     * @return an {@link ObjectNode} containing system data
-     */
-    private ObjectNode parseSys(JsonNode root) {
-        ObjectNode sysNode = objectMapper.createObjectNode();
-        JsonNode sysRoot = root.path("sys");
-
-        sysNode.put("sunrise", sysRoot.path("sunrise").asLong(0));
-        sysNode.put("sunset", sysRoot.path("sunset").asLong(0));
-        return sysNode;
     }
 }

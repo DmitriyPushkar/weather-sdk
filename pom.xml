@@ -11,7 +11,7 @@
     </parent>
     <groupId>com.example</groupId>
     <artifactId>weather-sdk</artifactId>
-    <version>1.0.6-SNAPSHOT</version>
+    <version>1.0.7-SNAPSHOT</version>
     <name>weather-sdk</name>
     <description>SDK for retrieving weather data from OpenWeather API</description>
     <properties>
@@ -31,6 +31,9 @@
         <maven.surfire.plugin>3.0.0-M7</maven.surfire.plugin>
         <maven.compiler.plugin>3.11.0</maven.compiler.plugin>
         <sonar-maven-plugin>3.9.1.2184</sonar-maven-plugin>
+        <hibernate.validator>8.0.1.final</hibernate.validator>
+        <jakarta.validation>3.0.2</jakarta.validation>
+        <org.glassfish>4.0.2</org.glassfish>
     </properties>
     <dependencies>
         <dependency>
@@ -84,6 +87,21 @@
             <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate.validator}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${jakarta.validation}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>${org.glassfish}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -98,7 +116,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.30</version>
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

@@ -1,9 +1,6 @@
 package com.example.weathersdk.api;
 
-import com.example.weathersdk.exception.CityNotFoundException;
-import com.example.weathersdk.exception.InvalidCityException;
-import com.example.weathersdk.exception.JsonParsingException;
-import com.example.weathersdk.exception.WeatherSdkException;
+import com.example.weathersdk.exception.*;
 
 import java.util.List;
 
@@ -61,4 +58,10 @@ public interface WeatherSdk {
      * Stops the background polling process if polling mode is enabled.
      */
     void stopPolling();
+
+    /**
+     * Gracefully shuts down this instance, stopping background processes and clearing resources.
+     * Any further calls to this instance will throw a {@link SdkShutdownException}.
+     */
+    void shutdown();
 }

@@ -3,7 +3,6 @@ package com.example.weathersdk.service;
 import com.example.weathersdk.enums.UpdateMode;
 import com.example.weathersdk.exception.CityNotFoundException;
 import com.example.weathersdk.exception.InvalidCityException;
-import com.example.weathersdk.exception.JsonParsingException;
 import com.example.weathersdk.exception.WeatherSdkException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -171,18 +170,6 @@ class WeatherSdkImplTest {
 
         verify(cacheManagerMock, times(2)).getCachedData("ExceptionCity");
         verify(apiClientMock).fetchWeather("ExceptionCity");
-        verify(cacheManagerMock, never()).updateCache(anyString(), anyString());
-    }
-
-    @Test
-    void testGetWeatherThrowsJsonParsingExceptionForBadJson() {
-        when(cacheManagerMock.getCachedData("BadJsonCity")).thenReturn(null);
-        when(apiClientMock.fetchWeather("BadJsonCity")).thenReturn("{{ this is not valid json");
-
-        assertThrows(JsonParsingException.class, () -> sdk.getWeather("BadJsonCity"));
-
-        verify(cacheManagerMock, times(2)).getCachedData("BadJsonCity");
-        verify(apiClientMock).fetchWeather("BadJsonCity");
         verify(cacheManagerMock, never()).updateCache(anyString(), anyString());
     }
 
