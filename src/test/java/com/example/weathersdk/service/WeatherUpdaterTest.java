@@ -68,20 +68,6 @@ class WeatherUpdaterTest {
     }
 
     @Test
-    void testUpdaterChangesInterval() {
-        when(cacheManager.getCachedCities()).thenReturn(Set.of("Tokyo"));
-        when(apiClient.fetchWeather("Tokyo")).thenReturn("{\"weather\": {\"main\": \"Rain\"}}");
-
-        updater = new WeatherUpdater(cacheManager, apiClient, 1);
-        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> verify(apiClient, atLeastOnce()).fetchWeather("Tokyo"));
-
-        updater.updateInterval(3);
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verify(apiClient, atLeast(2)).fetchWeather("Tokyo"));
-
-        updater.stop();
-    }
-
-    @Test
     void testUpdaterThreadSafety() throws InterruptedException {
         when(cacheManager.getCachedCities()).thenReturn(Set.of("Berlin"));
         when(apiClient.fetchWeather("Berlin")).thenReturn("{\"weather\": {\"main\": \"Sunny\"}}");
@@ -121,6 +107,42 @@ class WeatherUpdaterTest {
     void testUpdaterThrowsExceptionForInvalidInterval() {
         assertThrows(WeatherSdkException.class, () -> new WeatherUpdater(cacheManager, apiClient, 0));
         assertThrows(WeatherSdkException.class, () -> new WeatherUpdater(cacheManager, apiClient, -5));
+    }
+
+    @Test
+    void testStop_ShutsDownScheduler()  {
+        updater = new WeatherUpdater(cacheManager, apiClient, 1);
+
+        updater.stop();
+
+        ScheduledExecutorService scheduler = extractScheduler(updater);
+        assertTrue(scheduler.isShutdown());
+    }
+
+    @Test
+    void testStop_ForceShutdownIfSchedulerNotTerminating()  {
+        updater = new WeatherUpdater(cacheManager, apiClient, 1);
+
+        ScheduledExecutorService scheduler = extractScheduler(updater);
+
+        Executors.newSingleThreadScheduledExecutor().schedule(() -> {}, 10, TimeUnit.SECONDS);
+
+        updater.stop();
+
+        assertTrue(scheduler.isShutdown());
+    }
+
+    @Test
+    void testStop_HandlesInterruptedException() {
+        updater = new WeatherUpdater(cacheManager, apiClient, 1);
+        ScheduledExecutorService scheduler = extractScheduler(updater);
+
+        Thread.currentThread().interrupt();
+
+        updater.stop();
+
+        assertTrue(Thread.currentThread().isInterrupted());
+        assertTrue(scheduler.isShutdown());
     }
 
     private boolean isSchedulerShutdown(WeatherUpdater updater) {

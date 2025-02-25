@@ -10,14 +10,25 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+/**
+ * Client for interacting with the OpenWeather API.
+ * Provides methods to fetch weather data and handle API responses.
+ */
 @Slf4j
 class OpenWeatherApiClient {
+
     private static final String BASE_URL = "https://api.openweathermap.org/data/2.5";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final WebClient webClient;
     private final String apiKey;
 
+    /**
+     * Constructs an OpenWeather API client with the default base URL.
+     *
+     * @param apiKey the OpenWeather API key
+     * @throws InvalidApiKeyException if the API key is null or empty
+     */
     public OpenWeatherApiClient(String apiKey) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new InvalidApiKeyException("API key cannot be null or empty");
@@ -28,6 +39,13 @@ class OpenWeatherApiClient {
                 .build();
     }
 
+    /**
+     * Constructs an OpenWeather API client with a custom base URL.
+     *
+     * @param apiKey  the OpenWeather API key
+     * @param baseUrl the custom base URL
+     * @throws InvalidApiKeyException if the API key is null or empty
+     */
     public OpenWeatherApiClient(String apiKey, String baseUrl) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new InvalidApiKeyException("API key cannot be null or empty");
@@ -38,6 +56,18 @@ class OpenWeatherApiClient {
                 .build();
     }
 
+    /**
+     * Fetches weather data for the given city.
+     *
+     * @param cityName the name of the city
+     * @return a JSON string containing formatted weather data
+     * @throws InvalidCityException   if the city name is null or empty
+     * @throws InvalidApiKeyException if the API key is invalid
+     * @throws ApiKeyBlockedException if the API key is blocked
+     * @throws CityNotFoundException  if the city is not found
+     * @throws WeatherSdkException    for other API-related errors
+     * @throws NetworkException       if a network-related error occurs
+     */
     public String fetchWeather(String cityName) {
         if (cityName == null || cityName.trim().isEmpty()) {
             throw new InvalidCityException("City name cannot be null or empty");
@@ -80,6 +110,13 @@ class OpenWeatherApiClient {
         }
     }
 
+    /**
+     * Converts the OpenWeather API response into the required JSON format.
+     *
+     * @param response the API response object
+     * @return a JSON string representing the formatted weather data
+     * @throws WeatherSdkException if an error occurs during JSON processing
+     */
     private String convertToRequiredFormat(OpenWeatherResponse response) {
         try {
             return OBJECT_MAPPER.writeValueAsString(Map.of(
@@ -109,6 +146,13 @@ class OpenWeatherApiClient {
         }
     }
 
+    /**
+     * Handles API error responses and maps them to appropriate exceptions.
+     *
+     * @param status    the HTTP status code
+     * @param errorBody the raw error response body
+     * @return a Mono containing the appropriate exception
+     */
     private Mono<Throwable> handleErrorResponse(HttpStatusCode status, String errorBody) {
         log.warn("Client error from OpenWeather API (status={}): {}", status.value(), errorBody);
         String errorMessage = extractErrorMessage(errorBody);
@@ -120,6 +164,12 @@ class OpenWeatherApiClient {
         };
     }
 
+    /**
+     * Extracts the error message from the API response body.
+     *
+     * @param errorBody the raw error response body
+     * @return the extracted error message, or a default message if parsing fails
+     */
     private String extractErrorMessage(String errorBody) {
         try {
             Map<String, Object> errorMap = OBJECT_MAPPER.readValue(errorBody, Map.class);

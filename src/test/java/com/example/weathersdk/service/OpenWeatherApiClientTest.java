@@ -33,7 +33,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ReturnsJsonResponse() {
+    void testFetchWeather_ReturnsJsonResponse() {
         String mockResponse = """
                    {
                       "coord": {
@@ -105,32 +105,32 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void openWeatherApiClient_ThrowsException_WhenApiKeyIsNull() {
+    void testOpenWeatherApiClient_ThrowsException_WhenApiKeyIsNull() {
         assertThrows(InvalidApiKeyException.class, () -> new OpenWeatherApiClient(null));
     }
 
     @Test
-    void openWeatherApiClient_ThrowsException_WhenApiKeyIsEmpty() {
+    void testOpenWeatherApiClient_ThrowsException_WhenApiKeyIsEmpty() {
         assertThrows(InvalidApiKeyException.class, () -> new OpenWeatherApiClient(""));
     }
 
     @Test
-    void openWeatherApiClient_ThrowsException_WhenApiKeyIsBlank() {
+    void testOpenWeatherApiClient_ThrowsException_WhenApiKeyIsBlank() {
         assertThrows(InvalidApiKeyException.class, () -> new OpenWeatherApiClient("  "));
     }
 
     @Test
-    void fetchWeather_ThrowsInvalidCityException_WhenCityNameIsNull() {
+    void testFetchWeather_ThrowsInvalidCityException_WhenCityNameIsNull() {
         assertThrows(InvalidCityException.class, () -> apiClient.fetchWeather(null));
     }
 
     @Test
-    void fetchWeather_ThrowsInvalidCityException_WhenCityNameIsEmpty() {
+    void testFetchWeather_ThrowsInvalidCityException_WhenCityNameIsEmpty() {
         assertThrows(InvalidCityException.class, () -> apiClient.fetchWeather(""));
     }
 
     @Test
-    void fetchWeather_ThrowsNetworkException_WhenTimeoutOccurs() {
+    void testFetchWeather_ThrowsNetworkException_WhenTimeoutOccurs() {
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setBody("{\"message\":\"success\"}")
@@ -141,7 +141,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ThrowsWeatherSdkException_WhenBadRequest() {
+    void testFetchWeather_ThrowsWeatherSdkException_WhenBadRequest() {
         String errorResponse = """
                     {
                       "cod": "400",
@@ -158,7 +158,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ThrowsInvalidApiKeyException() {
+    void testFetchWeather_ThrowsInvalidApiKeyException() {
         String errorResponse = """
                     {
                       "cod": "401",
@@ -175,7 +175,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ThrowsInvalidApiKeyException_WhenApiKeyIsBlocked() {
+    void testFetchWeather_ThrowsInvalidApiKeyException_WhenApiKeyIsBlocked() {
         String errorResponse = """
                     {
                       "cod": "403",
@@ -192,7 +192,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ThrowsCityNotFoundException() {
+    void testFetchWeather_ThrowsCityNotFoundException() {
         String errorResponse = """
                     {
                       "cod": "404",
@@ -209,7 +209,7 @@ class OpenWeatherApiClientTest {
     }
 
     @Test
-    void fetchWeather_ThrowsUnexpectedApiException_WhenServerError() {
+    void testFetchWeather_ThrowsUnexpectedApiException_WhenServerError() {
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(500)
                 .setBody("{\"cod\": \"500\", \"message\": \"Internal Server Error\"}")

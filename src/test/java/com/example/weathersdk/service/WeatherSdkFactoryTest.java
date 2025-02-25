@@ -1,6 +1,7 @@
 package com.example.weathersdk.service;
 
 import com.example.weathersdk.api.WeatherSdk;
+import com.example.weathersdk.enums.UpdateMode;
 import com.example.weathersdk.exception.InvalidApiKeyException;
 import org.junit.jupiter.api.Test;
 
@@ -10,8 +11,8 @@ class WeatherSdkFactoryTest {
 
     @Test
     void testFactoryCreatesSingleInstancePerApiKey() {
-        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("test-key", 0);
-        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("test-key", 0);
+        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("test-key", UpdateMode.POLLING, 10);
+        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("test-key", UpdateMode.POLLING, 10);
 
         assertSame(sdk1, sdk2, "Factory should return the same instance for the same API key");
 
@@ -19,9 +20,29 @@ class WeatherSdkFactoryTest {
     }
 
     @Test
+    void testFactoryOverwritesOldPollingIntervalValueWithNewOneForApiKey() {
+        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("test-key", UpdateMode.POLLING, 10);
+        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("test-key", UpdateMode.POLLING, 15);
+
+        assertNotSame(sdk1, sdk2, "Factory should return a different instance for the same API key");
+
+        WeatherSdkFactory.removeInstance("test-key");
+    }
+
+    @Test
+    void testFactoryOverwritesOldModeValueWithNewOneForApiKey() {
+        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("test-key", UpdateMode.POLLING, 10);
+        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("test-key", UpdateMode.ON_DEMAND, 0);
+
+        assertNotSame(sdk1, sdk2, "Factory should return a different instance for the same API key");
+
+        WeatherSdkFactory.removeInstance("test-key");
+    }
+
+    @Test
     void testFactoryCreatesDifferentInstancesForDifferentKeys() {
-        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("key1", 0);
-        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("key2", 0);
+        WeatherSdk sdk1 = WeatherSdkFactory.getInstance("key1", UpdateMode.ON_DEMAND, 0);
+        WeatherSdk sdk2 = WeatherSdkFactory.getInstance("key2", UpdateMode.ON_DEMAND, 0);
 
         assertNotSame(sdk1, sdk2, "Factory should create different instances for different API keys");
 
@@ -31,10 +52,10 @@ class WeatherSdkFactoryTest {
 
     @Test
     void testRemoveInstanceDeletesInstance() {
-        WeatherSdk sdk = WeatherSdkFactory.getInstance("removable-key", 0);
+        WeatherSdk sdk = WeatherSdkFactory.getInstance("removable-key", UpdateMode.ON_DEMAND, 0);
         assertDoesNotThrow(() -> WeatherSdkFactory.removeInstance("removable-key"));
 
-        WeatherSdk newSdk = WeatherSdkFactory.getInstance("removable-key", 0);
+        WeatherSdk newSdk = WeatherSdkFactory.getInstance("removable-key", UpdateMode.ON_DEMAND, 0);
         assertNotSame(sdk, newSdk, "Factory should create a new instance after removal");
 
         WeatherSdkFactory.removeInstance("removable-key");
@@ -47,8 +68,8 @@ class WeatherSdkFactoryTest {
 
     @Test
     void testFactoryRejectsInvalidApiKey() {
-        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance("", 0));
-        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance("   ", 10));
-        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance(null, 5));
+        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance("", UpdateMode.ON_DEMAND, 0));
+        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance("   ", UpdateMode.ON_DEMAND, 10));
+        assertThrows(InvalidApiKeyException.class, () -> WeatherSdkFactory.getInstance(null, UpdateMode.ON_DEMAND, 5));
     }
 }

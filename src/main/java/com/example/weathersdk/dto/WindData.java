@@ -4,11 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+/**
+ * DTO representing wind-related weather data from the OpenWeather API.
+ * Contains information about wind speed.
+ */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WindData {
+
+    /**
+     * Wind speed in meters per second.
+     */
     @JsonProperty("speed")
     private double speed;
 
+    /**
+     * Private constructor to restrict manual instantiation outside the package.
+     */
     WindData() {}
 }

@@ -1,5 +1,6 @@
 package com.example.weathersdk.service;
 
+import com.example.weathersdk.enums.UpdateMode;
 import com.example.weathersdk.exception.CityNotFoundException;
 import com.example.weathersdk.exception.InvalidCityException;
 import com.example.weathersdk.exception.JsonParsingException;
@@ -7,6 +8,9 @@ import com.example.weathersdk.exception.WeatherSdkException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,7 +26,7 @@ class WeatherSdkImplTest {
         apiClientMock = mock(OpenWeatherApiClient.class);
         cacheManagerMock = mock(WeatherCacheManager.class);
 
-        sdk = new WeatherSdkImpl("validKey", 0);
+        sdk = new WeatherSdkImpl("validKey", UpdateMode.ON_DEMAND, 0);
 
         ReflectionTestUtils.setField(sdk, "apiClient", apiClientMock);
         ReflectionTestUtils.setField(sdk, "cacheManager", cacheManagerMock);
@@ -30,8 +34,30 @@ class WeatherSdkImplTest {
 
     @Test
     void testConstructorThrowsExceptionForInvalidApiKey() {
-        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("", 0));
-        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("   ", 10));
+        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("", UpdateMode.ON_DEMAND, 0));
+        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("   ", UpdateMode.POLLING, 10));
+    }
+
+    @Test
+    void testShouldThrowExceptionWhenPollingIntervalSetForOnDemandMode() {
+        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("validKey", UpdateMode.ON_DEMAND, 10));
+    }
+
+    @Test
+    void testShouldThrowExceptionWhenNonPollingModeHasPositivePollingInterval() {
+        assertThrows(WeatherSdkException.class, () -> new WeatherSdkImpl("validKey", UpdateMode.ON_DEMAND, 5));
+    }
+
+    @Test
+    void testShouldInitializeCorrectlyForPollingMode() {
+        WeatherSdkImpl weatherSdk = new WeatherSdkImpl("validKey", UpdateMode.POLLING, 10);
+        assertNotNull(weatherSdk);
+    }
+
+    @Test
+    void testShouldInitializeCorrectlyForOnDemandMode() {
+        WeatherSdkImpl weatherSdk = new WeatherSdkImpl("validKey", UpdateMode.ON_DEMAND, 0);
+        assertNotNull(weatherSdk);
     }
 
     @Test
@@ -64,6 +90,30 @@ class WeatherSdkImplTest {
         verify(cacheManagerMock).updateCache(eq("Zocca"), anyString());
     }
 
+
+    @Test
+    void testGetCachedCities_ReturnsCityList() {
+        when(cacheManagerMock.getCachedCities()).thenReturn(Set.of("London", "New York", "Tokyo"));
+
+        List<String> cities = sdk.getCachedCities();
+
+        assertNotNull(cities);
+        assertEquals(3, cities.size());
+        assertTrue(cities.contains("London"));
+        assertTrue(cities.contains("New York"));
+        assertTrue(cities.contains("Tokyo"));
+    }
+
+    @Test
+    void testGetCachedCities_ReturnsEmptyList_WhenNoCitiesCached() {
+        when(cacheManagerMock.getCachedCities()).thenReturn(Set.of());
+
+        List<String> cities = sdk.getCachedCities();
+
+        assertNotNull(cities);
+        assertTrue(cities.isEmpty());
+    }
+
     @Test
     void testGetWeatherThrowsInvalidCityException() {
         assertThrows(InvalidCityException.class, () -> sdk.getWeather(null));
@@ -72,7 +122,7 @@ class WeatherSdkImplTest {
 
     @Test
     void testStopPollingWithInterval() {
-        WeatherSdkImpl pollingSdk = new WeatherSdkImpl("validKey", 5);
+        WeatherSdkImpl pollingSdk = new WeatherSdkImpl("validKey", UpdateMode.POLLING, 5);
         assertTrue(pollingSdk.isPollingEnabled());
         pollingSdk.stopPolling();
         assertFalse(pollingSdk.isPollingEnabled());
