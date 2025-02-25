@@ -13,7 +13,7 @@ class WeatherUpdater {
     private final OpenWeatherApiClient apiClient;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile int interval;
-    private volatile ScheduledExecutorService scheduler;
+    private ScheduledExecutorService scheduler;
 
     public WeatherUpdater(WeatherCacheManager cacheManager, OpenWeatherApiClient apiClient, int interval) {
         if (interval <= 0) throw new WeatherSdkException("Polling interval must be greater than 0 seconds.");
@@ -21,8 +21,8 @@ class WeatherUpdater {
         this.apiClient = apiClient;
         this.interval = interval;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(this::updateWeather, 0, interval, TimeUnit.SECONDS);
-        log.info("WeatherUpdater started with polling interval of {} seconds.", interval);
+        scheduler.scheduleAtFixedRate(this::updateWeather, 0, this.interval, TimeUnit.SECONDS);
+        log.info("WeatherUpdater started with polling interval of {} seconds.", this.interval);
     }
 
     public synchronized void updateInterval(int newInterval) {

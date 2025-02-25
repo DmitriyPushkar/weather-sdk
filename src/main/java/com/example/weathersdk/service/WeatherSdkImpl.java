@@ -119,47 +119,58 @@ class WeatherSdkImpl implements WeatherSdk {
         try {
             JsonNode root = objectMapper.readTree(rawJson);
             ObjectNode sdkJson = objectMapper.createObjectNode();
-            ObjectNode weatherNode = objectMapper.createObjectNode();
-            JsonNode weatherArray = root.get("weather");
-            if (weatherArray != null && weatherArray.isArray() && !weatherArray.isEmpty()) {
-                weatherNode.put("main", weatherArray.get(0).get("main").asText(""));
-                weatherNode.put("description", weatherArray.get(0).get("description").asText(""));
-            }
-            sdkJson.set("weather", weatherNode);
+            sdkJson.set("weather", parseWeather(root));
+            sdkJson.set("temperature", parseTemperature(root));
+            sdkJson.put("visibility", root.path("visibility").asInt(0));
+            sdkJson.set("wind", parseWind(root));
+            sdkJson.put("datetime", root.path("dt").asLong(0));
+            sdkJson.set("sys", parseSys(root));
+            sdkJson.put("timezone", root.path("timezone").asLong(0));
+            sdkJson.put("name", root.path("name").asText("Unknown"));
 
-            ObjectNode tempNode = objectMapper.createObjectNode();
-            JsonNode mainNode = root.get("main");
-            if (mainNode != null) {
-                tempNode.put("temp", mainNode.get("temp").asDouble(0));
-                tempNode.put("feels_like", mainNode.get("feels_like").asDouble(0));
-            }
-            sdkJson.set("temperature", tempNode);
-
-            sdkJson.put("visibility", root.get("visibility") == null ? 0 : root.get("visibility").asInt(0));
-
-            ObjectNode windNode = objectMapper.createObjectNode();
-            JsonNode windRoot = root.get("wind");
-            if (windRoot != null) {
-                windNode.put("speed", windRoot.get("speed").asDouble(0));
-            }
-            sdkJson.set("wind", windNode);
-
-            sdkJson.put("datetime", root.get("dt") == null ? 0 : root.get("dt").asLong(0));
-
-            ObjectNode sysNode = objectMapper.createObjectNode();
-            JsonNode sysRoot = root.get("sys");
-            if (sysRoot != null) {
-                sysNode.put("sunrise", sysRoot.get("sunrise") == null ? 0 : sysRoot.get("sunrise").asLong(0));
-                sysNode.put("sunset", sysRoot.get("sunset") == null ? 0 : sysRoot.get("sunset").asLong(0));
-            }
-            sdkJson.set("sys", sysNode);
-
-            sdkJson.put("timezone", root.get("timezone") == null ? 0 : root.get("timezone").asLong(0));
-            sdkJson.put("name", root.get("name") == null ? "Unknown" : root.get("name").asText("Unknown"));
             return objectMapper.writeValueAsString(sdkJson);
+
         } catch (IOException e) {
             log.error("Failed to parse JSON from OpenWeather API", e);
             throw new JsonParsingException("Failed to parse JSON from OpenWeather", e);
         }
+    }
+
+    private ObjectNode parseWeather(JsonNode root) {
+        ObjectNode weatherNode = objectMapper.createObjectNode();
+        JsonNode weatherArray = root.path("weather");
+
+        if (weatherArray.isArray() && !weatherArray.isEmpty()) {
+            JsonNode firstWeather = weatherArray.get(0);
+            weatherNode.put("main",        firstWeather.path("main").asText(""));
+            weatherNode.put("description", firstWeather.path("description").asText(""));
+        }
+        return weatherNode;
+    }
+
+    private ObjectNode parseTemperature(JsonNode root) {
+        ObjectNode temperatureNode = objectMapper.createObjectNode();
+        JsonNode mainNode = root.path("main");
+
+        temperatureNode.put("temp",       mainNode.path("temp").asDouble(0.0));
+        temperatureNode.put("feels_like", mainNode.path("feels_like").asDouble(0.0));
+        return temperatureNode;
+    }
+
+    private ObjectNode parseWind(JsonNode root) {
+        ObjectNode windNode = objectMapper.createObjectNode();
+        JsonNode windRoot = root.path("wind");
+
+        windNode.put("speed", windRoot.path("speed").asDouble(0.0));
+        return windNode;
+    }
+
+    private ObjectNode parseSys(JsonNode root) {
+        ObjectNode sysNode = objectMapper.createObjectNode();
+        JsonNode sysRoot = root.path("sys");
+
+        sysNode.put("sunrise", sysRoot.path("sunrise").asLong(0));
+        sysNode.put("sunset",  sysRoot.path("sunset").asLong(0));
+        return sysNode;
     }
 }

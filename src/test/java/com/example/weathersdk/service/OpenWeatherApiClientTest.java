@@ -1,7 +1,6 @@
 package com.example.weathersdk.service;
 
 import com.example.weathersdk.exception.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -16,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class OpenWeatherApiClientTest {
     private MockWebServer mockWebServer;
     private OpenWeatherApiClient apiClient;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @BeforeEach
     void setUp() throws IOException {

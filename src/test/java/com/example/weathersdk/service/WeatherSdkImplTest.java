@@ -39,34 +39,23 @@ class WeatherSdkImplTest {
         when(cacheManagerMock.getCachedData("London")).thenReturn("cached-london");
         String result = sdk.getWeather("London");
         assertEquals("cached-london", result);
-        verify(cacheManagerMock).getCachedData(eq("London"));
+        verify(cacheManagerMock).getCachedData("London");
         verifyNoMoreInteractions(cacheManagerMock);
     }
 
     @Test
     void testGetWeatherFetchesFromApiIfNotCached() {
         when(cacheManagerMock.getCachedData("Zocca")).thenReturn(null);
-        when(apiClientMock.fetchWeather("Zocca")).thenReturn("{\n" +
-                "  \"weather\": {\n" +
-                "    \"main\": \"Clouds\",\n" +
-                "    \"description\": \"overcast clouds\"\n" +
-                "  },\n" +
-                "  \"temperature\": {\n" +
-                "    \"temp\": 48.78,\n" +
-                "    \"feels_like\": 48.78\n" +
-                "  },\n" +
-                "  \"visibility\": 10000,\n" +
-                "  \"wind\": {\n" +
-                "    \"speed\": 2.46\n" +
-                "  },\n" +
-                "  \"datetime\": 1740406884,\n" +
-                "  \"sys\": {\n" +
-                "    \"sunrise\": 1740376916,\n" +
-                "    \"sunset\": 1740416215\n" +
-                "  },\n" +
-                "  \"timezone\": 3600,\n" +
-                "  \"name\": \"Zocca\"\n" +
-                "}\n");
+        when(apiClientMock.fetchWeather("Zocca")).thenReturn("""
+                {"weather": {"main": "Clouds","description": "overcast clouds"},
+                  "temperature": {"temp": 48.78,"feels_like": 48.78},
+                  "visibility": 10000,
+                  "wind": {"speed": 2.46},
+                  "datetime": 1740406884,
+                  "sys": {"sunrise": 1740376916, "sunset": 1740416215},
+                  "timezone": 3600,
+                  "name": "Zocca"}
+                """);
 
         String result = sdk.getWeather("Zocca");
         assertNotNull(result);
@@ -105,27 +94,16 @@ class WeatherSdkImplTest {
     @Test
     void testUpdateWeather() {
         when(apiClientMock.fetchWeather("Zocca"))
-                .thenReturn("{\n" +
-                        "  \"weather\": {\n" +
-                        "    \"main\": \"Clouds\",\n" +
-                        "    \"description\": \"overcast clouds\"\n" +
-                        "  },\n" +
-                        "  \"temperature\": {\n" +
-                        "    \"temp\": 48.78,\n" +
-                        "    \"feels_like\": 48.78\n" +
-                        "  },\n" +
-                        "  \"visibility\": 10000,\n" +
-                        "  \"wind\": {\n" +
-                        "    \"speed\": 2.46\n" +
-                        "  },\n" +
-                        "  \"datetime\": 1740406884,\n" +
-                        "  \"sys\": {\n" +
-                        "    \"sunrise\": 1740376916,\n" +
-                        "    \"sunset\": 1740416215\n" +
-                        "  },\n" +
-                        "  \"timezone\": 3600,\n" +
-                        "  \"name\": \"Zocca\"\n" +
-                        "}\n");
+                .thenReturn("""
+                        {"weather":{"main":"Clouds","description":"overcast clouds"},
+                        "temperature":{"temp":48.78,"feels_like":48.78},
+                        "visibility":10000,
+                        "wind":{"speed":2.46},
+                        "datetime":1740406884,
+                        "sys":{"sunrise":1740376916,"sunset":1740416215},
+                        "timezone":3600,
+                        "name":"Zocca"}
+                        """);
         when(cacheManagerMock.getCachedData("Moscow")).thenReturn(null);
 
         assertDoesNotThrow(() -> sdk.updateWeather("Zocca"));
