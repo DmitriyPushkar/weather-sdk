@@ -23,7 +23,6 @@ class WeatherSdkImpl implements WeatherSdk {
     private final ObjectMapper objectMapper;
     private final ReentrantLock lock = new ReentrantLock();
     private WeatherUpdater weatherUpdater;
-    private final int pollingIntervalSeconds;
 
     WeatherSdkImpl(String apiKey, int pollingIntervalSeconds) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
@@ -32,7 +31,6 @@ class WeatherSdkImpl implements WeatherSdk {
         this.apiClient = new OpenWeatherApiClient(apiKey);
         this.cacheManager = new WeatherCacheManager();
         this.objectMapper = new ObjectMapper();
-        this.pollingIntervalSeconds = pollingIntervalSeconds;
 
         if (pollingIntervalSeconds > 0) {
             this.weatherUpdater = new WeatherUpdater(cacheManager, apiClient, pollingIntervalSeconds);

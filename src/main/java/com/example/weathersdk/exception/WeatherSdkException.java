@@ -5,7 +5,6 @@ import lombok.Getter;
 @Getter
 public class WeatherSdkException extends RuntimeException {
     private final int statusCode;
-
     private final String errorDetails;
 
     public WeatherSdkException(String message) {
