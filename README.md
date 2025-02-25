@@ -21,7 +21,7 @@ To use Weather SDK, include the following dependency in your Maven project:
 <dependency>
     <groupId>com.example</groupId>
     <artifactId>weather-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.7</version>
 </dependency>
 ```
 
