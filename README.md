@@ -24,6 +24,15 @@ To use Weather SDK, include the following dependency in your Maven project:
     <version>1.0.7</version>
 </dependency>
 ```
+# Getting an OpenWeather API Key
+
+To use this SDK, you need an API key from OpenWeather. Follow these steps to obtain one:
+
+1. Go to the OpenWeather website: [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up)
+2. Sign up for a free account or log in if you already have one.
+3. Navigate to the **API Keys** section under your account settings.
+4. Click **Generate API Key**, give it a name (e.g., "WeatherSDK"), and save it.
+5. Use the generated API key in your application.
 
 ## Getting Started
 
